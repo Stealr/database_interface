@@ -3,13 +3,14 @@ from PyQt5.QtWidgets import (QApplication, QWidget, QTabWidget, QAbstractScrollA
                              QTableWidget, QGroupBox, QTableWidgetItem, QPushButton, QMessageBox)
 
 
+# Установить размеры окна.
 # Обновлять таблицы после изменения данных
-# Добавить вкладку с предметами
+# Добавить вкладку с предметами +
 # Чётная, нечётная неделя
 # попробовать добавить окно с предложением добавления новой пары в базу данных
 # добавить сортировку по времени +
 # Исправить ввод пустых строчек +-
-# Изменять первую букву на большую
+# Изменять первую букву на большую.
 # Увеличить размер клеток в таблице пар
 
 class MainWindow(QWidget):
@@ -28,6 +29,7 @@ class MainWindow(QWidget):
         self._create_shedeule_tab()
         self._create_subject_tab()
         self._create_teacher_tab()
+        # self._create_odd_shedeule_tab()
 
     # Присоединение к бд \/
     def _connect_to_db(self):
@@ -69,6 +71,36 @@ class MainWindow(QWidget):
         self._create_shedule_table()
 
         self.update_shedule_button.clicked.connect(self._update_shedule)
+
+    # def _create_odd_shedeule_tab(self):
+    #     self.sheduleodd_tab = QWidget()
+    #     self.tabs.addTab(self.sheduleodd_tab, "Shedule_odd")
+    #     self.monday_gbox = QGroupBox("Monday")
+    #     self.tuesday_gbox = QGroupBox("Tuesday")
+    #     self.wednesday_gbox = QGroupBox("Wednesday")
+    #     self.thursday_gbox = QGroupBox("Thursday")
+    #     self.friday_gbox = QGroupBox("Friday")
+    #     self.saturday_gbox = QGroupBox("Saturday")
+    #     self.update_sheduleodd_button = QPushButton("Update")
+    #
+    #     # оси внутри группы
+    #     self.svbox = QVBoxLayout()  # главная вертикальная ось
+    #     self.shbox1 = QHBoxLayout()  # горизонтальные оси, входящие в вертикальную ось
+    #     self.shbox2 = QHBoxLayout()
+    #     self.shbox3 = QHBoxLayout()
+    #     self.shbox4 = QHBoxLayout()
+    #     self.svbox.addLayout(self.shbox1)
+    #     self.svbox.addLayout(self.shbox2)
+    #     self.svbox.addLayout(self.shbox3)
+    #     self.svbox.addLayout(self.shbox4)
+    #     self.shbox1.addWidget(self.monday_gbox)
+    #     self.shbox1.addWidget(self.thursday_gbox)
+    #     self.shbox2.addWidget(self.tuesday_gbox)
+    #     self.shbox2.addWidget(self.friday_gbox)
+    #     self.shbox3.addWidget(self.wednesday_gbox)
+    #     self.shbox3.addWidget(self.saturday_gbox)
+    #     self.shbox4.addWidget(self.update_sheduleodd_button)
+    #     self.sheduleodd_tab.setLayout(self.svbox)
 
     # Создание вкладки(преподователи), групп и кнопки \/
     def _create_teacher_tab(self):
@@ -164,7 +196,7 @@ class MainWindow(QWidget):
             self.day_table.setCellWidget(i, 4, joinButton)
             self.day_table.setCellWidget(i, 5, deleteButton)
             joinButton.clicked.connect(lambda ch, num=i, id=r[0]: self._change_day_from_table(num, day, id))
-            deleteButton.clicked.connect(lambda ch, id=r[0]: self._delete_from_table(id, day, 'shedeule'))
+            deleteButton.clicked.connect(lambda ch, id=r[0]: self._delete_from_table('...', id, day, 'shedeule'))
         addButton = QPushButton("Add")
         self.day_table.setCellWidget(len(records), 4, addButton)
         addButton.clicked.connect(lambda: self._add_to_table(records, day))
@@ -184,7 +216,7 @@ class MainWindow(QWidget):
             self.teacher_table.setCellWidget(i, 2, joinButton)
             self.teacher_table.setCellWidget(i, 3, deleteButton)
             joinButton.clicked.connect(lambda ch, num=i, id=r[0]: self._change_day_from_teacher_table(num, id))
-            deleteButton.clicked.connect(lambda ch, id=r[0]: self._delete_from_table(id, '...', 'teacher'))
+            deleteButton.clicked.connect(lambda ch, id=r[0]: self._delete_from_table('...', id, '...', 'teacher'))
         add_teacher_button = QPushButton("Add")
         self.teacher_table.setCellWidget(len(records), 2, add_teacher_button)
         add_teacher_button.clicked.connect(lambda: self._add_to_teacher_table(records))
@@ -203,7 +235,7 @@ class MainWindow(QWidget):
             self.subject_table.setCellWidget(i, 1, joinButton)
             self.subject_table.setCellWidget(i, 2, deleteButton)
             joinButton.clicked.connect(lambda ch, num=i, id=r[0]: self._change_day_from_subject_table(num, id))
-            deleteButton.clicked.connect(lambda ch, id=r[0]: self._delete_from_table(id, '...', 'subject'))
+            deleteButton.clicked.connect(lambda ch, id=r[0], subject=r[1]: self._delete_from_table(subject, id, '...', 'subject'))
         add_subject_button = QPushButton("Add")
         self.subject_table.setCellWidget(len(records), 1, add_subject_button)
         add_subject_button.clicked.connect(lambda: self._add_to_subject_table(records))
@@ -228,6 +260,8 @@ class MainWindow(QWidget):
             self.conn.commit()
         except:
             QMessageBox.about(self, "Error", "Enter all fields")
+            self.cursor.execute("ROLLBACK")
+            self.conn.commit()
 
     # Изменение отдельных строчек во вкладке преподователи(кнопка join) \/
     def _change_day_from_teacher_table(self, rowNum, id):
@@ -244,6 +278,8 @@ class MainWindow(QWidget):
             self.conn.commit()
         except:
             QMessageBox.about(self, "Error", "Enter all fields")
+            self.cursor.execute("ROLLBACK")
+            self.conn.commit()
 
     #
     def _change_day_from_subject_table(self, rowNum, id):
@@ -260,29 +296,44 @@ class MainWindow(QWidget):
             self.conn.commit()
         except:
             QMessageBox.about(self, "Error", "Такой пары нет в базе данных.")
-
+            self.cursor.execute("ROLLBACK")
+            self.conn.commit()
 
     # Удаление отдельных строчек(кнопка delete) \/
-    def _delete_from_table(self, id, day, table):
+    def _delete_from_table(self, subject, id, day, table):
         if table == 'shedeule':
             try:
                 self.day_table = getattr(self, day.lower() + '_table')
                 self.cursor.execute("DELETE FROM timetable WHERE id='{id}'".format(id=id))
-                # self.conn.commit()
+                self.conn.commit()
                 self.day_table.clear()
                 self._update_table(day)
             except:
                 QMessageBox.about(self, "Error", "Erorr delete")
+                self.cursor.execute("ROLLBACK")
+                self.conn.commit()
         elif table == 'teacher':
             try:
                 self.cursor.execute("DELETE FROM teacher WHERE id='{id}'".format(id=id))
-                # self.conn.commit()
+                self.conn.commit()
                 self.teacher_table.clear()
                 self._update_teacher_table()
             except:
                 QMessageBox.about(self, "Error", "Erorr delete")
+                self.cursor.execute("ROLLBACK")
+                self.conn.commit()
         elif table == 'subject':
-            pass
+            try:
+                self.cursor.execute("DELETE FROM teacher WHERE subject='{sub}'".format(sub=subject))
+                self.cursor.execute("DELETE FROM timetable WHERE subject='{sub}'".format(sub=subject))
+                self.cursor.execute("DELETE FROM subject WHERE name='{name}'".format(name=subject))
+                # self.conn.commit()
+                self.subject_table.clear()
+                self._update_subject_table()
+            except:
+                QMessageBox.about(self, "Error", "Erorr delete")
+                self.cursor.execute("ROLLBACK")
+                self.conn.commit()
 
     # Добавление строчек во вкладке расписание(кнопка add) \/
     def _add_to_table(self, rec, day):
@@ -300,6 +351,8 @@ class MainWindow(QWidget):
             self._update_table(day)
         except:
             QMessageBox.about(self, "Error", "Такого предмета не существует в базе данных")
+            self.cursor.execute("ROLLBACK")
+            self.conn.commit()
 
     # Добавление строчек во вкладке преподователи(кнопка add) \/
     def _add_to_teacher_table(self, rec):
@@ -312,6 +365,19 @@ class MainWindow(QWidget):
             self._update_teacher_table()
         except:
             QMessageBox.about(self, "Error", "Такого предмета не существует в базе данных")
+            self.cursor.execute("ROLLBACK")
+            self.conn.commit()
+
+    def _add_to_subject_table(self, rec):
+        try:
+            subject = str(self.subject_table.item(len(rec), 0).text())
+            self.cursor.execute("INSERT INTO subject(name)VALUES('{sub}')".format(sub=subject))
+            self.conn.commit()
+            self._update_subject_table()
+        except:
+            QMessageBox.about(self, "Error", "Error")
+            self.cursor.execute("ROLLBACK")
+            self.conn.commit()
 
     def _update_shedule(self):
         for i in self.days:
